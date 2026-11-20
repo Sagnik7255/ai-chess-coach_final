@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>LOgin/ Signup </title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      /* 🔥 SAME LANDING BACKGROUND */
+      background:
+        radial-gradient(circle at top, rgba(124, 58, 237, 0.25), transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.15), transparent 30%),
+        linear-gradient(135deg, #080b16, #111827);
+
+      color: white;
+    }
+
+    /* MAIN CONTAINER */
+    .container {
+      width: 800px;
+      height: 500px;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(25px);
+      border-radius: 20px;
+      display: flex;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+
+    /* FORMS BASE */
+    .form-container {
+      position: absolute;
+      width: 50%;
+      height: 100%;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+
+      transition: all 0.6s cubic-bezier(0.77, 0, 0.18, 1);
+    }
+
+    /* LOGIN DEFAULT */
+    .login {
+      left: 0;
+      z-index: 2;
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+
+    /* SIGNUP HIDDEN */
+    .signup {
+      left: 0;
+      z-index: 1;
+      opacity: 0;
+      transform: translateX(-40px) scale(0.95);
+    }
+
+    /* ACTIVE STATE */
+    .container.active .login {
+      transform: translateX(100%) scale(0.95);
+      opacity: 0;
+      z-index: 1;
+    }
+
+    .container.active .signup {
+      transform: translateX(100%) scale(1);
+      opacity: 1;
+      z-index: 2;
+    }
+
+    /* OVERLAY */
+    .overlay {
+      position: absolute;
+      width: 50%;
+      height: 100%;
+      right: 0;
+      top: 0;
+
+      background: linear-gradient(135deg, #ba93fe, #446abc);
+      color: rgb(17, 16, 16);
+      font-size: larger;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+
+      transition: transform 0.6s cubic-bezier(0.9, 0, 0.18, 1);
+      z-index: 5;
+    }
+
+    .container.active .overlay {
+      transform: translateX(-100%);
+    }
+
+    /* INPUT STYLE */
+    input {
+      width: 100%;
+      padding: 14px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      background: rgba(203, 197, 197, 0.85);
+      color: black;
+      /* font-weight: 500; */
+    }
+
+    /* BUTTON */
+    button {
+      width: auto;
+      padding: 12px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #8144e9, #344d82);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container" id="container">
+
+    <!-- LOGIN -->
+    <div class="form-container login">
+      <h2>Login</h2>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button onclick="login()">Login</button>
+    </div>
+
+    <!-- SIGNUP -->
+    <div class="form-container signup">
+      <h2>Sign Up</h2>
+      <input type="text" id="signupName" placeholder="Name">
+      <input type="email" id="signupEmail" placeholder="Email">
+      <input type="password" id="signupPassword" placeholder="Password">
+      <button onclick="signup()">Sign Up</button>
+    </div>
+
+    <!-- OVERLAY -->
+    <div class="overlay">
+      <h2 id="overlayText">New here?</h2>
+      <p id="overlaySub">Sign up to start coaching</p>
+      <button onclick="toggle()">Switch</button>
+    </div>
+
+  </div>
+
+  <script>
+
+    let isSignup = false;
+
+    function toggle() {
+      const container = document.getElementById("container");
+
+      container.classList.toggle("active");
+
+      isSignup = !isSignup;
+
+      // Smooth text fade change
+      const title = document.getElementById("overlayText");
+      const sub = document.getElementById("overlaySub");
+
+      title.style.opacity = 0;
+      sub.style.opacity = 0;
+
+      setTimeout(() => {
+        title.innerText = isSignup ? "Welcome back!\n" : "\nNew here?";
+        sub.innerText = isSignup ? "\nLogin to continue" : "\nSign up to start coaching";
+
+        title.style.opacity = 1;
+        sub.style.opacity = 1;
+      }, 200);
+    }
+
+    /* TEMP LOCAL STORAGE LOGIN */
+
+    function signup() {
+      const name = document.getElementById("signupName").value;
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
+
+      fetch("http://localhost:3000/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, email, password })
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log(data);
+
+          if (data.message) {
+            alert(data.message);
+            window.location.href = "game.html";
+          } else if (data.error) {
+            alert(data.error);
+          }
+        })
+        .catch(err => console.error(err));
+    }
+
+
+    function login() {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      fetch("http://localhost:3000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log(data);
+
+          if (data.message === "Login successful") {
+            alert("Login successful!");
+            window.location.href = "game.html";
+          } else {
+            alert(data.message);
+          }
+        })
+        .catch(err => console.error(err));
+    }
+
+
+  </script>
+
+</body>
+
+</html>
+
+
+
+

@@ -1,0 +1,54 @@
+/* BACKGROUND */
+body {
+  background: #f4f4f4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* TIMER CONTAINER */
+#timer-container {
+  display: flex;
+  justify-content: space-between;
+  width: 320px;
+  margin-bottom: 10px;
+}
+
+/* COMMON TIMER STYLE */
+#white-timer, #black-timer {
+  flex: 1;
+  margin: 0 5px;
+  padding: 12px;
+
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+
+  border-radius: 12px;
+  font-family: 'Segoe UI', sans-serif;
+
+  transition: all 0.3s ease;
+}
+
+/* BLACK TIMER */
+#black-timer {
+  background: linear-gradient(145deg, #000, #222);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+
+/* WHITE TIMER */
+#white-timer {
+  background: linear-gradient(145deg, #ffffff, #eaeaea);
+  color: #111;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* HOVER EFFECT */
+#white-timer:hover, #black-timer:hover {
+  transform: scale(1.05);
+}
+h1 {
+  text-align: center;
+  width: 100%;
+}

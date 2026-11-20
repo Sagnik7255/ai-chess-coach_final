@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Coach</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030508;
+            --card: rgba(255, 255, 255, 0.045);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #e8eaf6;
+            --muted: rgba(232, 234, 246, 0.55);
+            --accent: #6c63ff;
+            --accent2: #00f5a0;
+            --accent3: #ff6584;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        #c-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+
+        #c-part {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* CURSOR */
+        #cur {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: var(--accent2);
+            box-shadow: 0 0 16px var(--accent2), 0 0 36px rgba(0, 245, 160, .3);
+            transform: translate(-50%, -50%);
+        }
+
+        #cur-ring {
+            position: fixed;
+            pointer-events: none;
+            z-index: 998;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(108, 99, 255, .55);
+            transform: translate(-50%, -50%);
+            transition: width .2s, height .2s, border-color .2s;
+        }
+
+        /* PAGE */
+        .page {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 36px;
+        }
+
+        .hero {
+            width: min(1080px, 100%);
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 28px;
+            align-items: center;
+        }
+
+        /* LEFT */
+        .left {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            width: fit-content;
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(108, 99, 255, .35);
+            background: rgba(108, 99, 255, .08);
+            font-size: .72rem;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: rgba(180, 176, 255, .9);
+            animation: fadeUp .7s .1s ease both;
+        }
+
+        .dot-live {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent2);
+            animation: sonar 2s ease infinite;
+        }
+
+        @keyframes sonar {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 245, 160, .7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 9px rgba(0, 245, 160, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 245, 160, 0);
+            }
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(3.2rem, 7.5vw, 6.8rem);
+            font-weight: 800;
+            line-height: .92;
+            letter-spacing: -.03em;
+        }
+
+        .line {
+            display: block;
+            overflow: hidden;
+        }
+
+        .line span {
+            display: block;
+            animation: lineIn .85s cubic-bezier(.16, 1, .3, 1) both;
+        }
+
+        .line:nth-child(1) span {
+            animation-delay: .28s;
+        }
+
+        .line:nth-child(2) span {
+            animation-delay: .42s;
+        }
+
+        .line:nth-child(3) span {
+            animation-delay: .56s;
+        }
+
+        @keyframes lineIn {
+            from {
+                transform: translateY(110%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .grad {
+            background: linear-gradient(110deg, #6c63ff 0%, #c084fc 42%, #00f5a0 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            background-size: 200%;
+            animation: shiftG 5s linear infinite;
+        }
+
+        @keyframes shiftG {
+            0% {
+                background-position: 0%
+            }
+
+            100% {
+                background-position: 200%
+            }
+        }
+
+        .sub {
+            font-size: clamp(.92rem, 1.6vw, 1.1rem);
+            line-height: 1.72;
+            color: var(--muted);
+            max-width: 46ch;
+            animation: fadeUp .75s .7s ease both;
+        }
+
+        .btns {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            animation: fadeUp .75s .85s ease both;
+        }
+
+        .btn {
+            position: relative;
+            overflow: hidden;
+            padding: 15px 30px;
+            border-radius: 14px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: .9rem;
+            text-decoration: none;
+            cursor: none;
+            transition: transform .22s, box-shadow .22s;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, .14);
+            transform: translateX(-105%) skewX(-18deg);
+            transition: transform .42s ease;
+        }
+
+        .btn:hover::after {
+            transform: translateX(105%) skewX(-18deg);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn-p {
+            background: linear-gradient(135deg, #6c63ff, #a855f7);
+            color: #fff;
+            box-shadow: 0 10px 32px rgba(108, 99, 255, .32);
+        }
+
+        .btn-p:hover {
+            box-shadow: 0 16px 44px rgba(108, 99, 255, .48);
+        }
+
+        .btn-g {
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .13);
+            color: var(--text);
+        }
+
+        .btn-g:hover {
+            border-color: rgba(108, 99, 255, .5);
+            color: #c4bfff;
+        }
+
+        .tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            animation: fadeUp .75s 1s ease both;
+        }
+
+        .tag {
+            padding: 6px 13px;
+            border-radius: 8px;
+            font-size: .72rem;
+            letter-spacing: .05em;
+            border: 1px solid rgba(255, 255, 255, .09);
+            background: rgba(255, 255, 255, .04);
+            color: var(--muted);
+        }
+
+        /* RIGHT */
+        .right {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeUp .75s .5s ease both;
+        }
+
+        .glass {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+        }
+
+        .card-big {
+            padding: 28px 26px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-big::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(108, 99, 255, .3), rgba(0, 245, 160, .14), transparent 60%);
+            z-index: -1;
+        }
+
+        .card-big-label {
+            font-size: .68rem;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .card-big-num {
+            font-family: 'Syne', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -.03em;
+            background: linear-gradient(90deg, #fff, #c4bfff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .card-big-sub {
+            font-size: .78rem;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .bar-wrap {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bar-lbl {
+            font-size: .7rem;
+            color: var(--muted);
+            width: 72px;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 5px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, .08);
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transform-origin: left;
+            animation: barIn 1.4s cubic-bezier(.16, 1, .3, 1) both;
+        }
+
+        .c1 {
+            background: linear-gradient(90deg, #6c63ff, #c084fc);
+            animation-delay: .9s;
+        }
+
+        .c2 {
+            background: linear-gradient(90deg, #00f5a0, #06b6d4);
+            animation-delay: 1.05s;
+        }
+
+        .c3 {
+            background: linear-gradient(90deg, #f97316, #ff6584);
+            animation-delay: 1.2s;
+        }
+
+        @keyframes barIn {
+            from {
+                transform: scaleX(0)
+            }
+
+            to {
+                transform: scaleX(1)
+            }
+        }
+
+        .bar-val {
+            font-size: .7rem;
+            color: var(--muted);
+        }
+
+        .mini-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .mini {
+            padding: 18px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mini::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .m1::after {
+            background: linear-gradient(90deg, #6c63ff, #c084fc);
+        }
+
+        .m2::after {
+            background: linear-gradient(90deg, #00f5a0, #06b6d4);
+        }
+
+        .m3::after {
+            background: linear-gradient(90deg, #f97316, #ff6584);
+        }
+
+        .m4::after {
+            background: linear-gradient(90deg, #eab308, #f97316);
+        }
+
+        .mini-ico {
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .mini-val {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .mini-desc {
+            font-size: .68rem;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media(max-width:820px) {
+
+            html,
+            body {
+                overflow-y: auto;
+                overflow-x: hidden;
+                cursor: auto;
+            }
+
+            #cur,
+            #cur-ring {
+                display: none;
+            }
+
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .page {
+                padding: 60px 20px 80px;
+                justify-content: flex-start;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(108, 99, 255, .45);
+            border-radius: 2px;
+        }
+
+        /* 🔥 AUTH SECTION */
+        .auth-section {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        /* CONTAINER */
+        .auth-container {
+            width: 900px;
+            height: 520px;
+            position: relative;
+
+            display: flex;
+            overflow: hidden;
+
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(25px);
+            border-radius: 20px;
+
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        /* FORMS */
+        .form {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            padding: 40px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            transition: all 0.6s cubic-bezier(0.77, 0, 0.18, 1);
+        }
+
+        /* LOGIN DEFAULT */
+        .login {
+            left: 0;
+            z-index: 2;
+        }
+
+        /* SIGNUP HIDDEN */
+        .signup {
+            left: 0;
+            opacity: 0;
+            transform: translateX(-50px) scale(0.95);
+        }
+
+        /* ACTIVE STATE */
+        .auth-container.active .login {
+            transform: translateX(100%) scale(0.9);
+            opacity: 0;
+        }
+
+        .auth-container.active .signup {
+            transform: translateX(100%) scale(1);
+            opacity: 1;
+        }
+
+        /* SWITCH PANEL */
+        .switch-panel {
+            position: absolute;
+            right: 0;
+            width: 50%;
+            height: 100%;
+
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            transition: transform 0.6s ease;
+        }
+
+        .auth-container.active .switch-panel {
+            transform: translateX(-100%);
+        }
+
+        /* INPUT */
+        .auth-section input {
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: none;
+        }
+
+        /* BUTTON */
+        .auth-section button {
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, #7c3aed, #2563eb);
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* 🔥 SMOOTH SCROLL EFFECT */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="c-bg"></canvas>
+    <canvas id="c-part"></canvas>
+    <div id="cur"></div>
+    <div id="cur-ring"></div>
+
+    <div class="page">
+        <div class="hero">
+
+            <div class="left">
+                <span class="eyebrow">
+                    <span class="dot-live"></span>
+                    AI Coach · Deep Analysis Engine
+                </span>
+                <h1>
+                    <div class="line"><span>Learn.</span></div>
+                    <div class="line"><span>Analyze.</span></div>
+                    <div class="line"><span class="grad">Dominate.</span></div>
+                </h1>
+                <p class="sub">Your AI-powered chess coach. Real-time move evaluation, personalized training paths, and
+                    grandmaster-level insights — all in one place.</p>
+                <div class="btns">
+                    <a class="btn primary" onclick="goToAuth()">Start Coaching</a>
+                </div>
+                <div class="tags">
+                    <span class="tag">♟ Opening Theory</span>
+                    <span class="tag">⚡ Blitz Mode</span>
+                    <span class="tag">♛ Endgame Clinic</span>
+                    <span class="tag">🧠 Pattern Recognition</span>
+                </div>
+            </div>
+
+            <div class="right">
+                <div class="glass card-big">
+                    <div class="card-big-label">Your Performance Score</div>
+                    <div class="card-big-num" id="cnt">0</div>
+                    <div class="card-big-sub">↑ +142 pts this week &nbsp;·&nbsp; Top 4% globally</div>
+                    <div class="bar-wrap">
+                        <div class="bar-row">
+                            <span class="bar-lbl">Tactics</span>
+                            <div class="bar-track">
+                                <div class="bar-fill c1" style="width:87%"></div>
+                            </div>
+                            <span class="bar-val">87%</span>
+                        </div>
+                        <div class="bar-row">
+                            <span class="bar-lbl">Endgame</span>
+                            <div class="bar-track">
+                                <div class="bar-fill c2" style="width:74%"></div>
+                            </div>
+                            <span class="bar-val">74%</span>
+                        </div>
+                        <div class="bar-row">
+                            <span class="bar-lbl">Opening</span>
+                            <div class="bar-track">
+                                <div class="bar-fill c3" style="width:91%"></div>
+                            </div>
+                            <span class="bar-val">91%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mini-row">
+                    <div class="mini m1">
+                        <span class="mini-ico">🎯</span>
+                        <div class="mini-val">2,341</div>
+                        <div class="mini-desc">Puzzles Solved</div>
+                    </div>
+                    <div class="mini m2">
+                        <span class="mini-ico">♟</span>
+                        <div class="mini-val">98%</div>
+                        <div class="mini-desc">Accuracy Rate</div>
+                    </div>
+                    <div class="mini m3">
+                        <span class="mini-ico">⚡</span>
+                        <div class="mini-val">14.2s</div>
+                        <div class="mini-desc">Avg. Move Time</div>
+                    </div>
+                    <div class="mini m4">
+                        <span class="mini-ico">🏆</span>
+                        <div class="mini-val">12 Win</div>
+                        <div class="mini-desc">Streak</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ── CURSOR ──
+        const cur = document.getElementById('cur');
+        const ring = document.getElementById('cur-ring');
+        let mx = 0, my = 0, rx = 0, ry = 0;
+        document.addEventListener('mousemove', e => {
+            mx = e.clientX; my = e.clientY;
+            cur.style.left = mx + 'px'; cur.style.top = my + 'px';
+        });
+        document.querySelectorAll('a,.btn').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                ring.style.width = '54px'; ring.style.height = '54px';
+                ring.style.borderColor = 'rgba(255,101,132,.6)';
+            });
+            el.addEventListener('mouseleave', () => {
+                ring.style.width = '36px'; ring.style.height = '36px';
+                ring.style.borderColor = 'rgba(108,99,255,.55)';
+            });
+        });
+        (function tickRing() {
+            rx += (mx - rx) * .11; ry += (my - ry) * .11;
+            ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+            requestAnimationFrame(tickRing);
+        })();
+
+        // ── COUNTER ──
+        const cnt = document.getElementById('cnt');
+        let done = false;
+        new IntersectionObserver(e => {
+            if (e[0].isIntersecting && !done) {
+                done = true;
+                const end = 2847, dur = 2100, t0 = performance.now();
+                (function s(n) {
+                    const p = Math.min((n - t0) / dur, 1);
+                    cnt.textContent = Math.round((1 - Math.pow(1 - p, 3)) * end);
+                    if (p < 1) requestAnimationFrame(s);
+                })(performance.now());
+            }
+        }, { threshold: .5 }).observe(cnt);
+
+        // ── CANVAS SETUP ──
+        const bgC = document.getElementById('c-bg'), bgX = bgC.getContext('2d');
+        const pC = document.getElementById('c-part'), pX = pC.getContext('2d');
+        let W, H, dpr;
+        function resize() {
+            dpr = Math.min(devicePixelRatio || 1, 2);
+            W = innerWidth; H = innerHeight;
+            [bgC, pC].forEach(c => {
+                c.width = W * dpr; c.height = H * dpr;
+                c.style.width = W + 'px'; c.style.height = H + 'px';
+            });
+            bgX.setTransform(dpr, 0, 0, dpr, 0, 0);
+            pX.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // ── BACKGROUND ──
+        const orbs = [
+            { x: .14, y: .22, r: .38, h: 263 },
+            { x: .82, y: .18, r: .3, h: 160 },
+            { x: .62, y: .78, r: .34, h: 340 },
+            { x: .48, y: .5, r: .22, h: 290 },
+        ];
+        let bt = 0;
+        function drawBG() {
+            bgX.clearRect(0, 0, W, H);
+            orbs.forEach((o, i) => {
+                const px = o.x * W + Math.sin(bt * .28 + i) * W * .045;
+                const py = o.y * H + Math.cos(bt * .22 + i) * H * .04;
+                const g = bgX.createRadialGradient(px, py, 0, px, py, o.r * Math.max(W, H));
+                g.addColorStop(0, `hsla(${o.h},80%,60%,0.13)`);
+                g.addColorStop(1, `hsla(${o.h},80%,60%,0)`);
+                bgX.fillStyle = g; bgX.fillRect(0, 0, W, H);
+            });
+            // Animated dot grid
+            const step = 46;
+            for (let x = 0; x < W + step; x += step) {
+                for (let y = 0; y < H + step; y += step) {
+                    const wave = Math.sin(bt * .7 + x * .016) * Math.cos(bt * .5 + y * .016);
+                    bgX.beginPath();
+                    bgX.arc(x, y, 1.1, 0, Math.PI * 2);
+                    bgX.fillStyle = `rgba(255,255,255,${.045 + wave * .035})`;
+                    bgX.fill();
+                }
+            }
+            // Soft horizontal scan lines
+            for (let i = 0; i < 6; i++) {
+                const y = H * (.1 + i * .16) + Math.sin(bt * .22 + i * 1.4) * 32;
+                bgX.strokeStyle = `rgba(108,99,255,${.035 + Math.sin(bt * .3 + i) * .018})`;
+                bgX.lineWidth = .7;
+                bgX.beginPath(); bgX.moveTo(0, y); bgX.lineTo(W, y); bgX.stroke();
+            }
+            bt += .016;
+        }
+
+        // ── PARTICLES ──
+        class P {
+            constructor(x, y, burst) {
+                const a = Math.random() * Math.PI * 2;
+                const s = burst ? (1 + Math.random() * 5) : (.4 + Math.random() * 2.8);
+                this.x = x; this.y = y;
+                this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s;
+                this.life = 1;
+                this.decay = burst ? .022 + Math.random() * .018 : .016 + Math.random() * .016;
+                this.r = burst ? 2 + Math.random() * 4 : 1.5 + Math.random() * 6;
+                this.h = 175 + Math.random() * 15;//CYAN RANGE
+                this.glow = Math.random() > .55;
+            }
+            tick() {
+                this.x += this.vx; this.y += this.vy;
+                this.vx *= .972; this.vy *= .972;
+                this.vy += 0.04;//gravity pulls down like smoke
+                this.life -= this.decay;
+            }
+            draw() {
+                if (this.life <= 0) return;
+                if (this.glow) { pX.shadowBlur = 16; pX.shadowColor = `hsla(${this.h},90%,68%,${this.life})`; }
+                pX.beginPath();
+                pX.arc(this.x, this.y, this.r * this.life, 0, Math.PI * 2);
+                pX.fillStyle = `hsla(${this.h},88%,68%,${this.life})`;
+                pX.fill();
+                pX.shadowBlur = 0;
+            }
+            dead() { return this.life <= 0; }
+        }
+
+        // Burst ring on click
+        class Ring {
+            constructor(x, y) { this.x = x; this.y = y; this.r = 0; this.life = 1; }
+            tick() { this.r += 5; this.life -= .038; }
+            draw() {
+                if (this.life <= 0) return;
+                pX.beginPath();
+                pX.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                pX.strokeStyle = `rgba(108,99,255,${this.life * .6})`;
+                pX.lineWidth = 2; pX.stroke();
+                // Second ring, slightly behind
+                if (this.r > 20) {
+                    pX.beginPath();
+                    pX.arc(this.x, this.y, this.r - 18, 0, Math.PI * 2);
+                    pX.strokeStyle = `rgba(0,245,160,${this.life * .3})`;
+                    pX.lineWidth = 1; pX.stroke();
+                }
+            }
+            dead() { return this.life <= 0; }
+        }
+
+        // Ambient floaters
+        class Amb {
+            constructor(scatter) {
+                this.x = Math.random() * W;
+                this.y = scatter ? Math.random() * H : H + 10;
+                this.vy = -(0.18 + Math.random() * .5);
+                this.vx = (Math.random() - .5) * .16;
+                this.r = .6 + Math.random() * 1.4;
+                this.a = 0; this.ta = .06 + Math.random() * .14;
+                this.h = 172 + Math.random() * 18;
+            }
+            tick() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.a < this.ta) this.a += .003;
+                if (this.y < H * .22) this.a -= .004;
+                if (this.a <= 0 || this.y < -12) { this.y = H + 10; this.x = Math.random() * W; this.a = 0; }
+            }
+            draw() {
+                pX.beginPath(); pX.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                pX.fillStyle = `hsla(${this.h},75%,68%,${this.a})`; pX.fill();
+            }
+        }
+
+        const trail = [];
+        const rings = [];
+        const amb = Array.from({ length: 90 }, (_, i) => new Amb(i < 70));
+        let lx = 0, ly = 0;
+
+        document.addEventListener('mousemove', e => {
+            const speed = Math.hypot(e.clientX - lx, e.clientY - ly);
+            const n = Math.min(8 + Math.round(speed / 3), 28);
+            for (let i = 0; i < n; i++)trail.push(new P(e.clientX, e.clientY, false));
+            lx = e.clientX; ly = e.clientY;
+        });
+        document.addEventListener('mousedown', e => {
+            rings.push(new Ring(e.clientX, e.clientY));
+            for (let i = 0; i < 36; i++)trail.push(new P(e.clientX, e.clientY, true));
+        });
+
+        function drawMouseGlow() {
+            const g = pX.createRadialGradient(mx, my, 0, mx, my, 270);
+            g.addColorStop(0, 'rgba(108,99,255,0.065)');
+            g.addColorStop(.4, 'rgba(0,245,160,0.028)');
+            g.addColorStop(1, 'rgba(0,0,0,0)');
+            pX.fillStyle = g; pX.fillRect(0, 0, W, H);
+        }
+
+        // Connection lines from cursor to nearby ambients
+        function drawLinks() {
+            const maxD = 140;
+            amb.forEach(p => {
+                const dx = mx - p.x, dy = my - p.y, d = Math.sqrt(dx * dx + dy * dy);
+                if (d < maxD) {
+                    const a = (1 - d / maxD) * p.a * .9;
+                    pX.beginPath(); pX.moveTo(mx, my); pX.lineTo(p.x, p.y);
+                    pX.strokeStyle = `rgba(108,99,255,${a})`; pX.lineWidth = .65; pX.stroke();
+                }
+            });
+        }
+
+        function loop() {
+            drawBG();
+            pX.clearRect(0, 0, W, H);
+            drawMouseGlow();
+            drawLinks();
+            amb.forEach(p => { p.tick(); p.draw(); });
+            for (let i = trail.length - 1; i >= 0; i--) { trail[i].tick(); trail[i].draw(); if (trail[i].dead()) trail.splice(i, 1); }
+            for (let i = rings.length - 1; i >= 0; i--) { rings[i].tick(); rings[i].draw(); if (rings[i].dead()) rings.splice(i, 1); }
+            requestAnimationFrame(loop);
+        }
+        loop();
+
+        function goToAuth() {
+            document.body.classList.add("fade-out");
+
+            setTimeout(() => {
+                window.location.href = "auth.html";
+            }, 350);
+        }
+
+    </script>
+</body>
+</html>
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to AI Coach</title>
+    <style>
+        :root {
+            --bg1: #080b16;
+            --bg2: #111827;
+            --card: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.16);
+            --text: #f8fafc;
+            --muted: rgba(248, 250, 252, 0.72);
+            --accent: #7c3aed;
+            --accent2: #22c55e;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(124, 58, 237, 0.22), transparent 34%),
+                radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.14), transparent 28%),
+                linear-gradient(135deg, var(--bg1), var(--bg2));
+            color: var(--text);
+        }
+
+        body.fade-out {
+            opacity: 0;
+            transform: scale(0.96);
+            transition: all 0.35s ease-in-out;
+        }
+
+        canvas#particles {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 0;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.03), transparent 35%, rgba(0, 0, 0, 0.18));
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        .hero {
+            width: min(920px, 100%);
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .glass {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: var(--shadow);
+            border-radius: 28px;
+        }
+
+        .content {
+            padding: 36px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: var(--muted);
+            font-size: 0.92rem;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(2.8rem, 6vw, 5.6rem);
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            text-wrap: balance;
+        }
+
+        .accent {
+            display: block;
+            background: linear-gradient(90deg, #ffffff, #c4b5fd 40%, #86efac 85%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            margin: 18px 0 0;
+            max-width: 56ch;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--muted);
+        }
+
+        .actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-top: 28px;
+        }
+
+        .btn {
+            appearance: none;
+            border: 0;
+            outline: 0;
+            cursor: pointer;
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 0.98rem;
+            color: white;
+            text-decoration: none;
+            transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--accent), #2563eb);
+            box-shadow: 0 12px 30px rgba(124, 58, 237, 0.35);
+        }
+
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: var(--text);
+        }
+
+        .panel {
+            padding: 24px;
+            min-height: 100%;
+            display: grid;
+            gap: 16px;
+            align-content: center;
+        }
+
+        .stat {
+            padding: 18px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+        }
+
+        .stat span {
+            color: var(--muted);
+            line-height: 1.55;
+            font-size: 0.96rem;
+        }
+
+        .spark {
+            position: absolute;
+            inset: auto -80px -80px auto;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.36), transparent 64%);
+            filter: blur(12px);
+            pointer-events: none;
+            animation: floaty 7s ease-in-out infinite;
+        }
+
+        @keyframes floaty {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(-18px, -24px) scale(1.05);
+            }
+        }
+
+        .cursor-ring {
+            position: fixed;
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 3;
+            mix-blend-mode: screen;
+            backdrop-filter: blur(2px);
+            opacity: 0;
+        }
+
+        .hint {
+            margin-top: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.88rem;
+        }
+
+        @media (max-width: 860px) {
+            body {
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 28px;
+            }
+
+            .panel {
+                min-height: unset;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="particles"></canvas>
+    <div class="overlay"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <main class="container">
+        <section class="hero">
+            <div class="glass content">
+                <div class="spark"></div>
+                <div class="pill">✨ AI Coach • Interactive landing page</div>
+                <h1>
+                    Welcome to
+                    <span class="accent">AI Coach</span>
+                </h1>
+                <p class="subtitle">
+                    A modern chess learning experience with a responsive particle cursor, glass UI, and a premium first
+                    impression.
+                </p>
+                <div class="actions">
+                    <a class="btn primary" onclick="goToAuth()">Start Coaching</a>
+                </div>
+                <div class="hint">Move your cursor and watch the particle trail react.</div>
+            </div>
+
+            <aside class="glass panel">
+                <div class="stat">
+                    <strong>Smart guidance</strong>
+                    <span>Coach feedback can be added next, once the landing page is locked in.</span>
+                </div>
+                <div class="stat">
+                    <strong>Modern feel</strong>
+                    <span>Glassmorphism cards, soft shadows, animated gradients, and particle motion.</span>
+                </div>
+                <div class="stat">
+                    <strong>Responsive</strong>
+                    <span>The layout collapses cleanly on smaller screens.</span>
+                </div>
+            </aside>
+        </section>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        const cursorRing = document.getElementById('cursorRing');
+
+        let w = window.innerWidth;
+        let h = window.innerHeight;
+        const particles = [];
+        const mouse = { x: w / 2, y: h / 2, active: false };
+
+        function resize() {
+            w = window.innerWidth;
+            h = window.innerHeight;
+            const dpr = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        class Particle {
+            constructor(x, y, vx, vy, life, size, hue) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.life = life;
+                this.maxLife = life;
+                this.size = size;
+                this.hue = hue;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vx *= 0.985;
+                this.vy *= 0.985;
+                this.life -= 1;
+            }
+
+            draw() {
+                const alpha = Math.max(this.life / this.maxLife, 0);
+                ctx.beginPath();
+                ctx.fillStyle = `hsla(${this.hue}, 100%, 70%, ${alpha})`;
+                ctx.shadowBlur = 14;
+                ctx.shadowColor = `hsla(${this.hue}, 100%, 70%, ${alpha})`;
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function emitParticles(x, y, count = 4) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 0.6 + Math.random() * 2.2;
+                particles.push(new Particle(
+                    x,
+                    y,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed,
+                    40 + Math.random() * 25,
+                    1 + Math.random() * 2.4,
+                    260 + Math.random() * 90
+                ));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, w, h);
+
+            // faint background glow trails
+            const gradient = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 180);
+            gradient.addColorStop(0, 'rgba(124, 58, 237, 0.08)');
+            gradient.addColorStop(1, 'rgba(124, 58, 237, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, w, h);
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+
+            if (mouse.active) {
+                emitParticles(mouse.x, mouse.y, 2);
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            mouse.active = true;
+            cursorRing.style.opacity = '1';
+            cursorRing.style.left = mouse.x + 'px';
+            cursorRing.style.top = mouse.y + 'px';
+            emitParticles(mouse.x, mouse.y, 5);
+        });
+
+        window.addEventListener('mouseleave', () => {
+            mouse.active = false;
+            cursorRing.style.opacity = '0';
+        });
+
+        window.addEventListener('resize', resize);
+        resize();
+        animate();
+
+
+        function goToAuth() {
+            document.body.classList.add("fade-out");
+
+            setTimeout(() => {
+                window.location.href = "auth.html";
+            }, 350);
+        }
+
+
+    </script>
+</body>
+
+</html> -->
